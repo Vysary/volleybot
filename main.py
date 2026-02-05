@@ -29,11 +29,10 @@ class VolleyBot(commands.Bot):
     
     def __init__(self):
         intents = discord.Intents.default()
-        intents.message_content = True
         intents.guilds = True
         
         super().__init__(
-            command_prefix="/",
+            command_prefix="!",
             intents=intents,
             help_command=None
         )
@@ -75,8 +74,6 @@ class VolleyBot(commands.Bot):
             logger.info(f"✅ {len(synced)} commande(s) slash synchronisée(s)")
         except Exception as e:
             logger.error(f"❌ Erreur lors de la synchronisation: {e}")
-        except Exception as e:
-            print(f"❌ Erreur lors de la synchronisation: {e}")
 
 
 def main():
@@ -90,6 +87,13 @@ def main():
             await interaction.response.send_message("❌ Vous n'avez pas la permission d'utiliser cette commande.", ephemeral=True)
         else:
             await interaction.response.send_message(f"❌ Une erreur est survenue: {error}", ephemeral=True)
+
+    @bot.event
+    async def on_command_error(ctx: commands.Context, error: commands.CommandError):
+        """Ignore les commandes texte inconnues"""
+        if isinstance(error, commands.CommandNotFound):
+            return
+        raise error
     
     # Démarrer le bot
     try:
