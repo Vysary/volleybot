@@ -35,6 +35,7 @@ class VolleyballAPI:
                 logger.info(f"DEBUG: Total équipes à chercher: {len(teams)}")
                 team_id = None
                 found_team_name = None
+                team_country = None
                 for team in teams:
                     team_obj = team.get('team', team)
                     team_name_value = team_obj.get('name', '')
@@ -42,16 +43,37 @@ class VolleyballAPI:
                     if team_name.lower() in str(team_name_value).lower():
                         team_id = team_obj.get('id') or team.get('id')
                         found_team_name = team_name_value
-                        logger.info(f"DEBUG: ✅ MATCH trouvé! ID={team_id}")
+                        # Récupérer le pays de l'équipe
+                        country_data = team_obj.get('country', team.get('country'))
+                        if isinstance(country_data, dict):
+                            team_country = country_data.get('name', '')
+                        else:
+                            team_country = country_data or ''
+                        logger.info(f"DEBUG: ✅ MATCH trouvé! ID={team_id}, Pays={team_country}")
                         break
                 
                 if not team_id:
                     logger.warning(f"Équipe '{team_name}' non trouvée après recherche")
                     return {'success': False, 'message': f"Équipe '{team_name}' non trouvée"}
                 
+                # Trouver la ligue du pays
+                leagues = await self._get_leagues(session)
+                league_id = None
+                for league in leagues:
+                    country_field = league.get('country')
+                    league_country = country_field.get('name', '') if isinstance(country_field, dict) else (country_field or '')
+                    if team_country and team_country.lower() in str(league_country).lower():
+                        league_id = league.get('id')
+                        logger.info(f"DEBUG: Ligue trouvée: {league_country}, ID={league_id}")
+                        break
+                
+                if not league_id:
+                    logger.warning(f"Ligue non trouvée pour {team_country}")
+                    return {'success': False, 'message': f"Ligue non trouvée pour {team_country}"}
+                
                 url = f"{self.base_url}/standings"
-                params = {'team': team_id, 'season': 2024}
-                logger.info(f"DEBUG: Appel standings avec team_id={team_id}")
+                params = {'team': team_id, 'league': league_id, 'season': 2024}
+                logger.info(f"DEBUG: Appel standings avec team_id={team_id}, league_id={league_id}")
                 
                 async with session.get(url, headers=self.headers, params=params) as resp:
                     data = await resp.json()
