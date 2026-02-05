@@ -71,17 +71,25 @@ class VolleyballAPI:
                     logger.warning(f"Ligue non trouvée pour {team_country}")
                     return {'success': False, 'message': f"Ligue non trouvée pour {team_country}"}
                 
+                # Essayer plusieurs saisons (2025, 2024, 2023)
                 url = f"{self.base_url}/standings"
-                params = {'team': team_id, 'league': league_id, 'season': 2024}
-                logger.info(f"DEBUG: Appel standings avec team_id={team_id}, league_id={league_id}")
+                data = None
+                for season in [2025, 2024, 2023]:
+                    params = {'team': team_id, 'league': league_id, 'season': season}
+                    logger.info(f"DEBUG: Appel standings avec team_id={team_id}, league_id={league_id}, season={season}")
+                    
+                    async with session.get(url, headers=self.headers, params=params) as resp:
+                        temp_data = await resp.json()
+                        response_count = len(temp_data.get('response', []))
+                        logger.info(f"Standings pour {team_name} saison {season}: {resp.status}, response_count={response_count}")
+                        if resp.status == 200 and response_count > 0:
+                            data = temp_data
+                            break
                 
-                async with session.get(url, headers=self.headers, params=params) as resp:
-                    data = await resp.json()
-                    logger.info(f"Standings pour {team_name}: {resp.status}, response_count={len(data.get('response', []))}")
-                    if resp.status == 200:
-                        return {'success': True, 'team': found_team_name or team_name, 'data': data}
-                    else:
-                        return {'success': False, 'message': f"Erreur API: {resp.status}"}
+                if data and len(data.get('response', [])) > 0:
+                    return {'success': True, 'team': found_team_name or team_name, 'data': data}
+                else:
+                    return {'success': False, 'message': f"Aucune donnée de classement disponible pour {found_team_name or team_name}"}
         except Exception as e:
             logger.error(f"Erreur get_team_ranking: {e}")
             return {'success': False, 'message': f"Erreur: {str(e)}"}
