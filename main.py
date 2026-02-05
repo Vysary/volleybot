@@ -7,7 +7,15 @@ import discord
 from discord.ext import commands
 import asyncio
 import os
+import logging
 from dotenv import load_dotenv
+
+# Configurer le logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger('VolleyBot')
 
 # Charger les variables d'environnement
 load_dotenv()
@@ -40,9 +48,11 @@ class VolleyBot(commands.Bot):
         # Utiliser le chemin absolu basé sur le répertoire courant du script
         cogs_dir = os.path.join(os.path.dirname(__file__), 'cogs')
         
+        logger.info(f"Chargement des cogs depuis: {cogs_dir}")
+        
         # Vérifier que le dossier existe
         if not os.path.exists(cogs_dir):
-            print(f"⚠️ Le dossier cogs n'existe pas: {cogs_dir}")
+            logger.error(f"Le dossier cogs n'existe pas: {cogs_dir}")
             return
         
         for filename in os.listdir(cogs_dir):
@@ -50,19 +60,19 @@ class VolleyBot(commands.Bot):
                 cog_name = filename[:-3]
                 try:
                     await self.load_extension(f'cogs.{cog_name}')
-                    print(f"✅ Cog chargé: {cog_name}")
+                    logger.info(f"✅ Cog chargé: {cog_name}")
                 except Exception as e:
-                    print(f"❌ Erreur lors du chargement de {cog_name}: {e}")
+                    logger.error(f"❌ Erreur lors du chargement de {cog_name}: {e}")
     
-    async def on_ready(self):
-        """Événement déclenché quand le bot est connecté"""
-        print(f"🎮 {self.user} est connecté!")
-        print(f"📊 {len(self.guilds)} serveur(s) rejoints")
+    asynlogger.info(f"🎮 {self.user} est connecté!")
+        logger.info(f"📊 {len(self.guilds)} serveur(s) rejoints")
         
         # Synchroniser les commandes slash
         try:
             synced = await self.tree.sync()
-            print(f"✅ {len(synced)} commande(s) slash synchronisée(s)")
+            logger.info(f"✅ {len(synced)} commande(s) slash synchronisée(s)")
+        except Exception as e:
+            logger.error(f"✅ {len(synced)} commande(s) slash synchronisée(s)")
         except Exception as e:
             print(f"❌ Erreur lors de la synchronisation: {e}")
 
@@ -83,9 +93,9 @@ def main():
     try:
         bot.run(DISCORD_TOKEN)
     except discord.errors.LoginFailure:
-        print("❌ Erreur de connexion: Token Discord invalide!")
+        logger.error("❌ Erreur de connexion: Token Discord invalide!")
     except Exception as e:
-        print(f"❌ Erreur lors du démarrage du bot: {e}")
+        logger.error(f"❌ Erreur lors du démarrage du bot: {e}")
 
 
 if __name__ == "__main__":
