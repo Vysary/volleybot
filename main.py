@@ -37,7 +37,15 @@ class VolleyBot(commands.Bot):
     
     async def load_cogs(self):
         """Charge tous les cogs du dossier cogs"""
-        for filename in os.listdir('./cogs'):
+        # Utiliser le chemin absolu basé sur le répertoire courant du script
+        cogs_dir = os.path.join(os.path.dirname(__file__), 'cogs')
+        
+        # Vérifier que le dossier existe
+        if not os.path.exists(cogs_dir):
+            print(f"⚠️ Le dossier cogs n'existe pas: {cogs_dir}")
+            return
+        
+        for filename in os.listdir(cogs_dir):
             if filename.endswith('.py') and filename != '__init__.py':
                 cog_name = filename[:-3]
                 try:
