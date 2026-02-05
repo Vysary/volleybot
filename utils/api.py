@@ -76,9 +76,15 @@ class VolleyballAPI:
                 country_id = None
                 country_name = None
                 for league in leagues:
-                    if country.lower() in league.get('country', '').lower():
+                    country_field = league.get('country')
+                    if isinstance(country_field, dict):
+                        league_country = country_field.get('name', '')
+                    else:
+                        league_country = country_field or ''
+
+                    if country.lower() in str(league_country).lower():
                         country_id = league.get('id')
-                        country_name = league.get('country')
+                        country_name = league_country
                         break
                 
                 if not country_id:
