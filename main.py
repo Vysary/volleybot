@@ -64,7 +64,9 @@ class VolleyBot(commands.Bot):
                 except Exception as e:
                     logger.error(f"❌ Erreur lors du chargement de {cog_name}: {e}")
     
-    asynlogger.info(f"🎮 {self.user} est connecté!")
+    async def on_ready(self):
+        """Événement déclenché quand le bot est connecté"""
+        logger.info(f"🎮 {self.user} est connecté!")
         logger.info(f"📊 {len(self.guilds)} serveur(s) rejoints")
         
         # Synchroniser les commandes slash
@@ -72,7 +74,7 @@ class VolleyBot(commands.Bot):
             synced = await self.tree.sync()
             logger.info(f"✅ {len(synced)} commande(s) slash synchronisée(s)")
         except Exception as e:
-            logger.error(f"✅ {len(synced)} commande(s) slash synchronisée(s)")
+            logger.error(f"❌ Erreur lors de la synchronisation: {e}")
         except Exception as e:
             print(f"❌ Erreur lors de la synchronisation: {e}")
 
