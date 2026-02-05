@@ -4,8 +4,11 @@ Module pour les appels API Volleyball
 
 import aiohttp
 import asyncio
+import logging
 from datetime import datetime
 from config import VOLLEYBALL_API_KEY, VOLLEYBALL_API_BASE_URL
+
+logger = logging.getLogger('VolleyballAPI')
 
 
 class VolleyballAPI:
@@ -51,8 +54,9 @@ class VolleyballAPI:
                 params = {
                     'team': team_id,
                     'season': 2024
-                }
-                
+                }data = await resp.json()
+                    logger.info(f"API standings réponse: {data}")
+                    if resp.status == 200:
                 async with session.get(url, headers=self.headers, params=params) as resp:
                     if resp.status == 200:
                         data = await resp.json()
@@ -103,7 +107,7 @@ class VolleyballAPI:
                     }
                 
                 # Récupérer les matchs du jour
-                date_str = datetime.utcnow().strftime('%Y-%m-%d')
+                logger.info(f"Recherche matchs pour {country} (leagues: {matching_leagues}) à la date {date_str}")
                 all_matches = []
                 for league_id in matching_leagues[:5]:  # limiter pour éviter trop d'appels
                     params = {
@@ -111,10 +115,14 @@ class VolleyballAPI:
                         'date': date_str
                     }
                     data = await self._fetch_games(session, params)
+                    logger.info(f"Réponse /games pour ligue {league_id}: {data}")
                     if data is None:
                         data = await self._fetch_matches(session, params)
+                        logger.info(f"Réponse /matches pour ligue {league_id}: {data}")
                     if data and data.get('response'):
                         all_matches.extend(data.get('response', []))
+                
+                logger.info(f"Total matchs trouvés: {len(all_matches)}")        all_matches.extend(data.get('response', []))
                 
                 return {
                     'success': True,
